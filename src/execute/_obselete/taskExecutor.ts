@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import { ProfileData, ExecutionResult } from '../shared/types';
-import { CONFIG } from '../shared/config';
+import { ProfileData, ExecutionResult } from '../../shared/types';
+import { CONFIG } from '../../shared/config';
 
 const openai = new OpenAI({
   apiKey: CONFIG.OPENAI_API_KEY,
@@ -8,6 +8,18 @@ const openai = new OpenAI({
 
 export async function executeTask(profile: ProfileData): Promise<ExecutionResult> {
   const messages = createMessages(profile);
+
+  if (CONFIG.TEST_MODE) {
+    // Simulate API response in test mode
+    console.log(`Test mode: Simulating API call for profile ${profile.username}`);
+    return {
+      profileData: profile,
+      description: "This is a test description for " + profile.username,
+      inputTokens: 50,
+      outputTokens: 20,
+      totalTokens: 70,
+    };
+  }
 
   try {
     const response = await openai.chat.completions.create({

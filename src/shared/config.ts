@@ -6,4 +6,5 @@ export const CONFIG = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   PROFILES_DIR: './profiles',
   RESULTS_DIR: './results',
+  TEST_MODE: true,
 };

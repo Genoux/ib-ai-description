@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { analyzeProfile } from './profileAnalyzer';
+import { analyzeProfile, calculateCost } from './profileAnalyzer';
 import { CONFIG } from '../shared/config';
 import { ProfileData, AnalysisResult } from '../shared/types';
 
@@ -23,6 +23,8 @@ function findIndexFiles(dir: string): string[] {
 }
 
 export async function runAnalysis(): Promise<void> {
+  console.log('Starting analysis...');
+
   const indexFiles = findIndexFiles(CONFIG.PROFILES_DIR);
   let totalProfiles = 0;
   let totalEstimatedInputTokens = 0;
@@ -39,26 +41,28 @@ export async function runAnalysis(): Promise<void> {
         totalEstimatedInputTokens += result.totalEstimatedInputTokens;
         totalEstimatedOutputTokens += result.totalEstimatedOutputTokens;
         totalCost += result.estimatedCost;
-
-        // // Log details for every 1000th profile
-        // if (totalProfiles % 1000 === 0) {
-        //   console.log(`Processed ${totalProfiles} profiles:`);
-        //   console.log({
-        //     totalEstimatedInputTokens,
-        //     totalEstimatedOutputTokens,
-        //     totalCost: totalCost.toFixed(6)
-        //   });
-        // }
+        console.log(`Profile ${totalProfiles}: Cost $${result.estimatedCost.toFixed(6)}`);
+        if (totalProfiles % 1000 === 0) {
+          console.log(`Processed ${totalProfiles} profiles:`);
+          console.log({
+            totalEstimatedInputTokens,
+            totalEstimatedOutputTokens,
+            totalCost: totalCost.toFixed(6)
+          });
+        }
       }
     }
   }
 
+  const finalCost = calculateCost(totalEstimatedInputTokens, totalEstimatedOutputTokens);
+  console.log(`Final calculated cost: $${finalCost.toFixed(4)}`);
+  
   const analysisResult: AnalysisResult = {
     totalProfiles,
     totalEstimatedInputTokens,
     totalEstimatedOutputTokens,
     totalTokens: totalEstimatedInputTokens + totalEstimatedOutputTokens,
-    totalCost,
+    totalCost: finalCost,
     averageEstimatedTokensPerProfile: Math.round((totalEstimatedInputTokens + totalEstimatedOutputTokens) / totalProfiles),
   };
 
@@ -71,16 +75,6 @@ export async function runAnalysis(): Promise<void> {
     JSON.stringify(analysisResult, null, 2)
   );
 
-  console.log(`Analysis complete. Total estimated cost: $${totalCost.toFixed(2)}`);
+  console.log(`Analysis complete. Total estimated cost: $${totalCost}`);
   console.log(`Total profiles analyzed: ${totalProfiles}`);
 }
-
-// Function to run the analysis
-async function main() {
-  console.log('Starting analysis...');
-  await runAnalysis();
-  console.log('Analysis completed.');
-}
-
-// Run the main function
-main().catch(console.error);

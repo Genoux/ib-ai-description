@@ -7,8 +7,8 @@ type ChatMessage = {
 };
 
 const pricingConfig = {
-    inputCostPerMillionTokens: 5,  // $0.03 per 1K tokens
-    outputCostPerMillionTokens: 15  // $0.06 per 1K tokens
+  inputCostPerToken: 0.000000075,  // $0.075 per 1M tokens
+  outputCostPerToken: 0.000000300  // $0.300 per 1M tokens
 };
 
 export function analyzeProfile(profile: ProfileData) {
@@ -16,13 +16,6 @@ export function analyzeProfile(profile: ProfileData) {
   const inputTokens = encodeChat(chatInput, 'gpt-4o').length;
   const outputTokens = estimateOutputTokens(profile);
   const estimatedCost = calculateCost(inputTokens, outputTokens);
-
-  console.log({
-    username: profile.username,
-    inputTokens,
-    outputTokens,
-    estimatedCost
-  });
 
   return {
     totalEstimatedInputTokens: inputTokens,
@@ -45,9 +38,12 @@ function estimateOutputTokens(profile: ProfileData): number {
   return encode(sampleOutput).length;
 }
 
-function calculateCost(inputTokens: number, outputTokens: number): number {
-  const { inputCostPerMillionTokens, outputCostPerMillionTokens } = pricingConfig;
-  const inputCost = (inputTokens / 1000000) * inputCostPerMillionTokens;
-  const outputCost = (outputTokens / 1000000) * outputCostPerMillionTokens;
-  return inputCost + outputCost;
+export function calculateCost(inputTokens: number, outputTokens: number): number {
+  const { inputCostPerToken, outputCostPerToken } = pricingConfig;
+  const inputCost = inputTokens * inputCostPerToken;
+  const outputCost = outputTokens * outputCostPerToken;
+  const totalCost = inputCost + outputCost;
+  console.log(`Tokens: ${inputTokens} input, ${outputTokens} output`);
+  console.log(`Costs: $${inputCost.toFixed(6)} input, $${outputCost.toFixed(6)} output, $${totalCost.toFixed(6)} total`);
+  return totalCost;
 }
